@@ -1,13 +1,9 @@
-# Roadmap FMV Studio
+# Roadmap
 
-1. **Archive/container** — membuka save, membaca manifest, mengekstrak member. Implementasi awal pada build 0.3.
-2. **Database reader untuk versi yang terdeteksi** — parse `game_db.dat`, tabel nama, entitas pemain/staf, klub, kompetisi/liga, kontrak, dan hubungan transfer. Setiap field harus memiliki bukti offset/relasi dan validasi.
-3. **Editor berbasis entitas** — pencarian pemain/klub/liga, form atribut, edit kontrak, transfer dan relasi klub. Tidak mengizinkan menyimpan field yang belum dipahami.
-4. **Writer/repacker** — serialisasi ulang database/member, kompresi Zstandard, pembaruan manifest, pointer, ukuran, dan checksum sesuai format.
-5. **Validasi round-trip** — buka ulang hasil ekspor, bandingkan field yang diubah, validasi panjang/offset, dan uji di salinan save dalam game.
-6. **Perluasan** — staf, stadion, keuangan, aturan liga, kompetisi, sejarah dan data lain setelah skema teruji.
-
-## Aturan keamanan
-- Selalu pertahankan file asli.
-- Tidak menebak field berdasarkan kemiripan format versi game lain.
-- Jangan aktifkan ekspor save yang diedit sebelum uji round-trip berhasil.
+1. **Done in 0.4:** archive reader, database extraction, structured text search/edit with fixed byte length, Zstandard chunk recompression, manifest/offset writer, container round-trip validation.
+2. **Next:** identify and validate FM21.3/21.4 person/player record boundaries and map player records to name IDs.
+3. Build player grid/editor: name, date of birth, nationality, positions, attributes, current/potential ability and other verified fields.
+4. Identify club and competition records and build searchable club/league editors.
+5. Map contract, current club/team and transfer-related relationships; implement transfer operations with consistency checks.
+6. Add length-changing edits only after a record serializer is verified; support rollback and an edit journal.
+7. Validate generated saves in FMT21 Touch on copies of real saves.

@@ -1,27 +1,36 @@
-# FMV Studio — build 0.3
+# FMV Studio 0.4 — FMT21 Touch Save Editor Core
 
-Tujuan proyek: membuat save editor untuk file `.fmv` Football Manager Touch, yang bisa dijalankan dari browser Android dan di-host di GitHub Pages.
+FMV Studio targets **Football Manager Touch 2021**, internal save versions **21.3.x and 21.4.x**. The filename is not used to infer the game version; the internal `game_info.dat` version is read instead.
 
-Format yang terdeteksi dari isi file sampel adalah FM21 Touch `21.4.0` (`21.4.0-0vmf.` dan `21.4.0-0tmf.`), meskipun nama salah satu file mengandung teks “FMT 26”. Rincian hasil verifikasi ada di [FORMAT-RESEARCH.md](FORMAT-RESEARCH.md).
+## Working functionality in 0.4
 
-## Apa yang benar-benar bekerja pada build ini
-- Membuka **satu** file FMV.
-- Memvalidasi header `02 01 fmf.` dan menemukan manifest melalui pointer di header.
-- Mendekompresi manifest Zstandard menggunakan `fzstd` dari CDN.
-- Membaca daftar anggota arsip dan sub-arsip (termasuk `rgman`).
-- Mencari dan memfilter anggota arsip.
-- Mengekstrak anggota arsip yang dipilih sebagai file biner.
-- Mengunduh indeks manifest sebagai JSON.
-- Semua file save diproses di browser; file save tidak dikirim ke server.
+- Opens one `.fmv` save in the browser.
+- Reads the FMF/FMV archive manifest and identifies `game_db.dat`.
+- Decompresses the database while preserving original Zstandard chunk boundaries.
+- Searches for a text value in the decompressed database and shows each occurrence with a byte offset and surrounding context.
+- Allows editing an occurrence only when a 32-bit byte-length prefix is detected and the replacement has **exactly the same UTF-8 byte length**. This avoids shifting any binary offsets.
+- Re-compresses the modified database chunk-by-chunk, updates archive offsets and stored lengths, serializes/compresses the manifest, and builds a new `.fmv`.
+- Re-opens the generated manifest and compares every decompressed `game_db.dat` byte against the edited database before enabling the download.
+- Processes save data locally in the browser; it is not uploaded to a server.
 
-## Yang belum selesai
-Build ini **belum** mengedit data pemain, klub, liga, kontrak atau transfer dan belum menulis ulang file `.fmv`. Itu membutuhkan parser database khusus untuk versi internal save yang dibaca dan encoder/repacker yang tervalidasi. Jangan gunakan hasil ekstraksi sebagai pengganti save game.
+## Important limitation
 
-## Menjalankan di GitHub Pages
-1. Buat repository publik bernama `fmv-studio`.
-2. Unggah `index.html` ke root repository.
-3. Buka Settings → Pages → Deploy from a branch → `main` → `/(root)`.
-4. Buka URL GitHub Pages dari Android. Browser perlu akses internet untuk memuat modul `fzstd` dari esm.sh.
+This build is a **real, limited text-field editing/repacking core**, not yet the full entity editor. It does **not** yet map a selected string to a verified player, club or competition record. It does not edit numeric player attributes, CA/PA, positions, club finances, league rules, contracts, or transfer relationships. Do not treat an occurrence in the text search as a guaranteed player-specific field; a name-pool value can be shared. Those require a verified FM21.3/21.4 record parser and relationship mapper.
 
-## Catatan format
-Manifest memiliki nama save, daftar member dengan offset relatif ke payload, ukuran tersimpan, ukuran hasil dekompresi, serta sub-arsip. Build ini memvalidasi rentang dan ukuran hasil dekompresi sebelum mengunduh anggota. Offset/struktur field pemain tidak ditebak.
+The app intentionally refuses length-changing edits. It does not create or delete database records.
+
+## Deploy to GitHub Pages from Android
+
+1. Download and extract `fmv-studio-v0.4.zip`.
+2. Create a GitHub repository named `fmv-studio`.
+3. Upload `index.html` and the documentation files to the repository root.
+4. In **Settings → Pages**, choose **Deploy from a branch**, branch `main`, folder `/(root)`, then save.
+5. Open the Pages URL in Chrome on Android.
+
+The app uses two browser modules from CDNs: `fzstd` for decompression and `@bokuweb/zstd-wasm` for compression. Internet access is required when first loading the app.
+
+## Safety
+
+- Always keep an untouched copy of the original save.
+- The built-in check proves that the output archive can be parsed and its database round-trips byte-for-byte. It does **not** prove that the game accepts every edited field. Test on a duplicate save.
+- The project is unofficial and is not affiliated with Sports Interactive or SEGA.
