@@ -1,26 +1,27 @@
-# FMV Studio — Prototype 0.1
+# FMV Studio — build 0.3
 
-Aplikasi web statis untuk menganalisis file `.fmv` secara lokal di browser Android. Dapat di-host di GitHub Pages atau Cloudflare Pages.
+Tujuan proyek: membuat save editor untuk file `.fmv` Football Manager Touch, yang bisa dijalankan dari browser Android dan di-host di GitHub Pages.
 
-## Fitur prototipe
-- Pilih dua file untuk perbandingan.
-- Analisis ukuran, header awal, entropi sampel, dan signature kandidat.
-- Cari string ASCII yang dapat dibaca pada sampel awal.
-- Hex viewer untuk membaca byte berdasarkan offset.
-- Ekspor laporan analisis JSON.
-- Semua file diproses lokal pada browser; file tidak diunggah ke server.
+Format yang terdeteksi dari isi file sampel adalah FM21 Touch `21.4.0` (`21.4.0-0vmf.` dan `21.4.0-0tmf.`), meskipun nama salah satu file mengandung teks “FMT 26”. Rincian hasil verifikasi ada di [FORMAT-RESEARCH.md](FORMAT-RESEARCH.md).
 
-## Batasan penting
-Prototype ini **belum** melakukan ekstraksi file/folder, editing tabel payload, atau repack `.fmv`. Format internal belum diverifikasi. Penanda byte yang mirip signature kompresi tidak cukup untuk membuktikan bahwa keseluruhan payload dapat didekompresi.
+## Apa yang benar-benar bekerja pada build ini
+- Membuka **satu** file FMV.
+- Memvalidasi header `02 01 fmf.` dan menemukan manifest melalui pointer di header.
+- Mendekompresi manifest Zstandard menggunakan `fzstd` dari CDN.
+- Membaca daftar anggota arsip dan sub-arsip (termasuk `rgman`).
+- Mencari dan memfilter anggota arsip.
+- Mengekstrak anggota arsip yang dipilih sebagai file biner.
+- Mengunduh indeks manifest sebagai JSON.
+- Semua file save diproses di browser; file save tidak dikirim ke server.
 
-## Deploy ke GitHub Pages dari Android
-1. Buat repository baru, misalnya `fmv-studio`.
-2. Unggah `index.html`, `manifest.webmanifest`, dan `sw.js` ke root repository.
-3. Buka **Settings → Pages**.
-4. Pada Build and deployment, pilih **Deploy from a branch**, branch `main`, folder `/ (root)`, lalu Save.
-5. Buka URL Pages yang muncul.
+## Yang belum selesai
+Build ini **belum** mengedit data pemain, klub, liga, kontrak atau transfer dan belum menulis ulang file `.fmv`. Itu membutuhkan parser database khusus untuk versi internal save yang dibaca dan encoder/repacker yang tervalidasi. Jangan gunakan hasil ekstraksi sebagai pengganti save game.
 
-Untuk Cloudflare Pages, buat project Pages yang terhubung ke repository dan gunakan root directory `/` tanpa build command.
+## Menjalankan di GitHub Pages
+1. Buat repository publik bernama `fmv-studio`.
+2. Unggah `index.html` ke root repository.
+3. Buka Settings → Pages → Deploy from a branch → `main` → `/(root)`.
+4. Buka URL GitHub Pages dari Android. Browser perlu akses internet untuk memuat modul `fzstd` dari esm.sh.
 
-## Tahap selanjutnya
-Validasi struktur wrapper dengan analisis byte yang lebih lengkap dan beberapa file pembanding. Setelah parser dapat memvalidasi dan merekonstruksi payload, baru tambahkan ekstraksi serta editor berdasarkan tipe resource yang benar-benar ditemukan.
+## Catatan format
+Manifest memiliki nama save, daftar member dengan offset relatif ke payload, ukuran tersimpan, ukuran hasil dekompresi, serta sub-arsip. Build ini memvalidasi rentang dan ukuran hasil dekompresi sebelum mengunduh anggota. Offset/struktur field pemain tidak ditebak.
